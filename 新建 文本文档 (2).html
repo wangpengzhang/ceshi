@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>收入纳税明细</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: #ffffff;
+            height: 44px;
+        }
+
+        .nav-back {
+            color: #1890ff;
+            font-size: 17px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-title {
+            font-size: 18px;
+            color: #000;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .nav-action {
+            color: #1890ff;
+            font-size: 17px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            padding-right: 15px;
+        }
+
+        /* 汇总卡片 */
+        .summary-card {
+            background: #ffffff;
+            margin: 10px 0;
+            padding: 18px 15px;
+        }
+
+        /* 给第一个元素设置虚拟元素横线 */
+        .summary-card .summary-row:first-child {
+            position: relative;
+        }
+
+        .summary-card .summary-row:first-child::before {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #e5e5e5;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            line-height: 1.4;
+        }
+
+        .summary-row+.summary-row {
+            margin-top: 14px;
+        }
+
+        .summary-label {
+            font-size: 16px;
+            color: #000;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-help {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #1890ff;
+            border-radius: 50%;
+            font-size: 12px;
+            color: #1890ff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            margin-right: 5px;
+        }
+
+        .summary-value {
+            font-size: 17px;
+            color: #000;
+        }
+
+        /* 明细卡片 */
+        .detail-card {
+            background: #ffffff;
+            margin-bottom: 10px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            line-height: 1.5;
+            margin-right: 32px;
+        }
+
+        .detail-type {
+            font-size: 16px;
+            color: #000;
+        }
+
+        .detail-date {
+            font-size: 16px;
+            color: #000;
+        }
+
+        .detail-info {
+            font-size: 14.5px;
+            color: #888;
+            line-height: 1.8;
+        }
+
+        .detail-arrow {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #c0c0c0;
+            font-size: 20px;
+            font-weight: 300;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <nav class="navbar" style="position: relative;">
+            <button class="nav-back">
+                <svg t="1766548942596" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="2004" width="20" height="20">
+                    <path
+                        d="M631.04 161.941333a42.666667 42.666667 0 0 1 63.061333 57.386667l-2.474666 2.730667-289.962667 292.245333 289.706667 287.402667a42.666667 42.666667 0 0 1 2.730666 57.6l-2.474666 2.752a42.666667 42.666667 0 0 1-57.6 2.709333l-2.752-2.474667-320-317.44a42.666667 42.666667 0 0 1-2.709334-57.6l2.474667-2.752 320-322.56z"
+                        fill="#1890ff" p-id="2005"></path>
+                </svg> 返回</button>
+            <span class="nav-title">收入纳税明细</span>
+            <button class="nav-action">批量申诉</button>
+        </nav>
+
+        <!-- 汇总卡片 -->
+        <div class="summary-card">
+            <div class="summary-row">
+                <span class="summary-label">收入合计<span class="icon-help">?</span>：</span>
+                <span class="summary-value" id="totalIncome">1289.62元</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">已申报税额合计：</span>
+                <span class="summary-value" id="totalTax">0.00元</span>
+            </div>
+        </div>
+
+        <!-- 明细列表 -->
+        <div id="detailList"></div>
+    </div>
+
+    <script>
+        const taxDetails = [
+            { type: '劳务报酬', date: '2025-11', subType: '一般劳务报酬', payer: '腾讯科技（深圳）有限公司', income: 0.05, tax: 0.00 },
+            { type: '工资薪金', date: '2025-11', subType: '正常工资薪金', payer: '比亚迪汽车有限公司', income: 1264.94, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-10', subType: '一般劳务报酬', payer: '腾讯云计算（北京）有限...', income: 8.84, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-10', subType: '一般劳务报酬', payer: '腾讯科技（深圳）有限公司', income: 15.79, tax: 0.00 },
+            { type: '工资薪金', date: '2025-10', subType: '正常工资薪金', payer: '比亚迪汽车有限公司', income: 1356.20, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-09', subType: '一般劳务报酬', payer: '腾讯科技（深圳）有限公司', income: 12.50, tax: 0.00 },
+            { type: '工资薪金', date: '2025-09', subType: '正常工资薪金', payer: '比亚迪汽车有限公司', income: 1420.00, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-08', subType: '一般劳务报酬', payer: '腾讯云计算（北京）有限...', income: 6.30, tax: 0.00 },
+            { type: '工资薪金', date: '2025-08', subType: '正常工资薪金', payer: '比亚迪汽车有限公司', income: 1380.50, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-07', subType: '一般劳务报酬', payer: '腾讯科技（深圳）有限公司', income: 9.20, tax: 0.00 },
+            { type: '工资薪金', date: '2025-07', subType: '正常工资薪金', payer: '比亚迪汽车有限公司', income: 1290.00, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-06', subType: '一般劳务报酬', payer: '腾讯云计算（北京）有限...', income: 5.60, tax: 0.00 },
+            { type: '工资薪金', date: '2025-06', subType: '正常工资薪金', payer: '比亚迪汽车有限公司', income: 1310.80, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-05', subType: '一般劳务报酬', payer: '腾讯科技（深圳）有限公司', income: 7.80, tax: 0.00 },
+            { type: '工资薪金', date: '2025-05', subType: '正常工资薪金', payer: '比亚迪汽车有限公司', income: 1275.60, tax: 0.00 },
+            { type: '劳务报酬', date: '2025-04', subType: '一般劳务报酬', payer: '腾讯云计算（北京）有限...', income: 4.50, tax: 0.00 }
+        ];
+
+        function formatAmount(amount) {
+            return amount.toFixed(2);
+        }
+
+        function renderDetailList() {
+            const listEl = document.getElementById('detailList');
+            listEl.innerHTML = taxDetails.map(item => `
+        <div class="detail-card">
+          <div class="detail-header">
+            <span class="detail-type">${item.type}</span>
+            <span class="detail-date">${item.date}</span>
+          </div>
+          <div class="detail-info">
+            <div>所得项目小类：${item.subType}</div>
+            <div>扣缴义务人：${item.payer}</div>
+            <div>收入：${formatAmount(item.income)}元</div>
+            <div>已申报税额：${formatAmount(item.tax)}元</div>
+          </div>
+          <svg 
+            t="1766549738919" 
+            class="icon detail-arrow" 
+            viewBox="0 0 1024 1024" 
+            version="1.1" 
+            xmlns="http://www.w3.org/2000/svg" 
+            p-id="2310" 
+            width="23" 
+            height="23">
+            <path d="M373.408 200.224a32 32 0 0 0-42.816 47.552l293.664 264.256-291.84 264.256a32 32 0 0 0-4.8 42.048l2.56 3.136a32 32 0 0 0 45.184 2.24l318.112-288a32 32 0 0 0-0.064-47.488l-320-288z" fill="#c0c0c0" p-id="2311"></path>
+          </svg>
+        </div>
+      `).join('');
+        }
+
+        function updateSummary() {
+            const totalIncome = taxDetails.reduce((sum, item) => sum + item.income, 0);
+            const totalTax = taxDetails.reduce((sum, item) => sum + item.tax, 0);
+            document.getElementById('totalIncome').textContent = formatAmount(totalIncome) + '元';
+            document.getElementById('totalTax').textContent = formatAmount(totalTax) + '元';
+        }
+
+        renderDetailList();
+        updateSummary();
+    </script>
+</body>
+
+</html>
